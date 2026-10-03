@@ -1,0 +1,501 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <title>Temperature Settings</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <script src="https://unpkg.com/@phosphor-icons/web"></script>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600&display=swap" rel="stylesheet">
+    
+    <script>
+        tailwind.config = {
+            darkMode: 'class',
+            theme: {
+                extend: {
+                    fontFamily: {
+                        sans: ['Inter', 'sans-serif'],
+                    },
+                    colors: {
+                        brand: {
+                            pink: '#fd236a',
+                            darkbg: '#25273d',
+                            darkcard: '#1e2034',
+                        }
+                    }
+                }
+            }
+        }
+    </script>
+    
+    <style>
+        body {
+            background-color: #fd236a;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            min-height: 100vh;
+            margin: 0;
+            font-family: 'Inter', sans-serif;
+            overflow: hidden;
+            touch-action: none; /* Prevent scrolling while dragging on mobile */
+            transition: background-color 0.4s ease;
+        }
+        
+        :root.dark body {
+            background-color: #1a1b2e;
+        }
+
+        .mobile-container {
+            width: 340px;
+            height: 680px;
+            border-radius: 20px;
+            box-shadow: 0 25px 50px -12px rgba(0, 0, 0, 0.4);
+            position: relative;
+            overflow: hidden;
+            transition: all 0.4s ease;
+        }
+
+        .control-btn {
+            background: white;
+            color: #9ca3af;
+            border: 1px solid #e5e7eb;
+            position: relative;
+        }
+        
+        .control-btn.active {
+            background: linear-gradient(135deg, #4facfe 0%, #00f2fe 100%);
+            color: white;
+            border-color: transparent;
+            box-shadow: 0 8px 16px -4px rgba(79, 172, 254, 0.5);
+        }
+
+        :root.dark .control-btn {
+            background: transparent;
+            color: #6b7280;
+            border: 1px solid #374151;
+        }
+        
+        :root.dark .control-btn.active {
+            background: #23253b;
+            color: #60a5fa;
+            border: 1px solid #3b82f6;
+            box-shadow: 0 0 20px rgba(59, 130, 246, 0.3), inset 0 0 10px rgba(59, 130, 246, 0.2);
+        }
+
+        .slider-knob {
+            transition: transform 0.1s ease;
+        }
+        
+        .slider-knob:active, .slider-knob.dragging {
+            transform: scale(1.2);
+        }
+        
+        .theme-toggle-btn {
+            position: absolute;
+            top: 20px;
+            right: 20px;
+            z-index: 10;
+        }
+
+        /* Hide number input arrows for timer */
+        input[type="number"]::-webkit-inner-spin-button,
+        input[type="number"]::-webkit-outer-spin-button {
+            -webkit-appearance: none;
+            margin: 0;
+        }
+        input[type="number"] {
+            -moz-appearance: textfield;
+        }
+    </style>
+</head>
+<body>
+
+    <div id="app" class="mobile-container bg-white dark:bg-brand-darkbg flex flex-col relative group">
+        
+        <!-- Theme Toggle -->
+        <button id="themeToggle" class="theme-toggle-btn w-10 h-10 rounded-full flex items-center justify-center bg-gray-100 dark:bg-gray-800 text-gray-600 dark:text-gray-300 hover:bg-gray-200 dark:hover:bg-gray-700 transition-colors">
+            <i class="ph ph-moon text-xl dark:hidden"></i>
+            <i class="ph ph-sun text-xl hidden dark:block"></i>
+        </button>
+
+        <!-- Header -->
+        <div class="pt-10 pb-2 text-center">
+            <h1 class="text-[10px] tracking-[0.2em] font-semibold text-gray-800 dark:text-gray-200 mb-2 uppercase">Recycled Heatinator</h1>
+            <h2 class="text-[8px] tracking-[0.15em] text-gray-400 dark:text-gray-500 uppercase">Temperature Settings</h2>
+        </div>
+
+        <!-- Room Temperature -->
+        <div class="text-center mb-6 mt-4">
+            <div class="text-[9px] tracking-[0.15em] text-gray-500 dark:text-gray-400 font-semibold mb-2 uppercase">Room Temp</div>
+            <div class="text-6xl font-light text-gray-900 dark:text-white tracking-tighter flex justify-center items-start">
+                22<span class="text-3xl font-medium mt-2 ml-1">&deg;C</span>
+            </div>
+        </div>
+
+        <div class="flex justify-center gap-1.5 px-2 w-full">
+            <!-- Auto Button -->
+            <div class="flex flex-col items-center gap-2 w-[50px]">
+                <button onclick="setActive(this, 'auto')" class="control-btn w-11 h-11 shrink-0 rounded-full flex items-center justify-center transition-all duration-300 active">
+                    <i class="ph ph-magic-wand text-xl"></i>
+                </button>
+                <span class="text-[8px] uppercase tracking-wider text-gray-400 dark:text-gray-500 font-medium text-center">Auto</span>
+            </div>
+
+            <!-- Manual Up Button -->
+            <div class="flex flex-col items-center gap-2 w-[50px]">
+                <button onclick="setActive(this, 'manual-up')" class="control-btn w-11 h-11 shrink-0 rounded-full flex items-center justify-center transition-all duration-300">
+                    <i class="ph ph-arrow-up text-xl"></i>
+                </button>
+                <span class="text-[8px] uppercase tracking-wider text-gray-400 dark:text-gray-500 font-medium text-center leading-[1.2]">Manual<br>Up</span>
+            </div>
+
+            <!-- Manual Down Button -->
+            <div class="flex flex-col items-center gap-2 w-[50px]">
+                <button onclick="setActive(this, 'manual-down')" class="control-btn w-11 h-11 shrink-0 rounded-full flex items-center justify-center transition-all duration-300">
+                    <i class="ph ph-arrow-down text-xl"></i>
+                </button>
+                <span class="text-[8px] uppercase tracking-wider text-gray-400 dark:text-gray-500 font-medium text-center leading-[1.2]">Manual<br>Down</span>
+            </div>
+
+            <!-- Timer Button -->
+            <div class="flex flex-col items-center gap-2 w-[50px]">
+                <button id="timerBtn" onclick="setActive(this, 'timer'); openTimerModal()" class="control-btn w-11 h-11 shrink-0 rounded-full flex items-center justify-center transition-all duration-300">
+                    <i class="ph ph-clock text-xl"></i>
+                </button>
+                <span class="text-[8px] uppercase tracking-wider text-gray-400 dark:text-gray-500 font-medium text-center">Timer</span>
+            </div>
+
+            <!-- Off Button -->
+            <div class="flex flex-col items-center gap-2 w-[50px]">
+                <button onclick="setActive(this, 'off')" class="control-btn w-11 h-11 shrink-0 rounded-full flex items-center justify-center transition-all duration-300">
+                    <i class="ph ph-power text-xl"></i>
+                </button>
+                <span class="text-[8px] uppercase tracking-wider text-gray-400 dark:text-gray-500 font-medium text-center">Off</span>
+            </div>
+        </div>
+        
+        <!-- Timer Countdown Display -->
+        <div id="countdownContainer" class="h-6 mt-3 flex justify-center items-center opacity-0 transition-opacity duration-300 pointer-events-none">
+            <div class="bg-brand-pink/10 dark:bg-indigo-500/20 text-brand-pink dark:text-indigo-400 px-4 py-1 rounded-full text-xs font-semibold tracking-widest flex items-center gap-2 shadow-sm border border-brand-pink/20 dark:border-indigo-500/30">
+                <i class="ph ph-hourglass-high animate-pulse"></i>
+                <span id="countdownText">00:00:00</span>
+            </div>
+        </div>
+
+        <!-- Current Temp Range Display -->
+        <div class="flex flex-col items-center justify-center flex-grow mt-2 mb-0">
+            <div class="text-[8px] tracking-[0.15em] text-gray-500 dark:text-gray-400 font-semibold mb-1 uppercase">Current Range</div>
+            <div class="text-3xl font-light text-gray-900 dark:text-white tracking-tighter flex justify-center items-start">
+                <span id="temp-display">22&deg;C - 28&deg;C</span>
+            </div>
+        </div>
+
+        <!-- Bottom Slider Section -->
+        <div class="relative w-full h-48 overflow-hidden pointer-events-none">
+            <svg id="slider-svg" class="absolute bottom-0 w-full h-full" viewBox="0 0 340 180" preserveAspectRatio="none">
+                <!-- Base Dotted Arc (Background) -->
+                <path 
+                    d="M 40,160 A 130,130 0 0,1 300,160" 
+                    fill="none" 
+                    class="stroke-gray-200 dark:stroke-gray-700 transition-colors duration-500"
+                    stroke-width="3" 
+                    stroke-linecap="round" 
+                    stroke-dasharray="1 8" 
+                />
+                
+                <!-- Inner solid curved line (glow effect base) -->
+                <path 
+                    d="M 40,160 A 130,130 0 0,1 300,160" 
+                    fill="none" 
+                    class="stroke-gray-200 dark:stroke-gray-800 transition-colors duration-500 opacity-40"
+                    stroke-width="2" 
+                />
+
+                <!-- Highlighted Active Arc (Between Min and Max) -->
+                <path 
+                    id="highlight-path"
+                    d="" 
+                    fill="none" 
+                    class="stroke-brand-pink dark:stroke-indigo-500 transition-colors duration-500"
+                    stroke-width="4" 
+                    stroke-linecap="round" 
+                    stroke-dasharray="2 8" 
+                />
+                
+                <!-- Min Slider Knob Group -->
+                <g class="pointer-events-auto cursor-pointer" onmousedown="startDrag(event, 'min')" ontouchstart="startDrag(event, 'min')">
+                    <circle id="target-min" cx="170" cy="30" r="24" fill="transparent" />
+                    <circle 
+                        id="knob-min"
+                        cx="170" cy="30" r="9" 
+                        class="fill-brand-pink dark:fill-white slider-knob transform-origin-center"
+                        style="filter: drop-shadow(0px 4px 6px rgba(0,0,0,0.3)); transform-origin: center;"
+                    />
+                </g>
+
+                <!-- Max Slider Knob Group -->
+                <g class="pointer-events-auto cursor-pointer" onmousedown="startDrag(event, 'max')" ontouchstart="startDrag(event, 'max')">
+                    <circle id="target-max" cx="170" cy="30" r="24" fill="transparent" />
+                    <circle 
+                        id="knob-max"
+                        cx="170" cy="30" r="9" 
+                        class="fill-brand-pink dark:fill-white slider-knob transform-origin-center"
+                        style="filter: drop-shadow(0px 4px 6px rgba(0,0,0,0.3)); transform-origin: center;"
+                    />
+                </g>
+            </svg>
+            
+            <!-- Temperature Range Labels (15 to 30) -->
+            <div class="absolute bottom-6 left-12 text-xs font-semibold text-gray-800 dark:text-gray-300">15</div>
+            <div class="absolute bottom-6 right-12 text-xs font-semibold text-gray-800 dark:text-gray-300">30</div>
+        </div>
+
+        <!-- Timer Modal Overlay -->
+        <div id="timerModal" class="absolute inset-0 bg-black/50 backdrop-blur-sm z-50 flex items-center justify-center opacity-0 pointer-events-none transition-opacity duration-300">
+            <div class="bg-white dark:bg-brand-darkcard w-10/12 rounded-2xl p-6 shadow-2xl transform scale-95 transition-transform duration-300" id="timerModalContent">
+                <h3 class="text-gray-900 dark:text-white text-lg font-semibold mb-5 text-center">Set Timer</h3>
+                
+                <div class="flex justify-center items-center gap-4 mb-6">
+                    <div class="flex flex-col items-center">
+                        <input type="number" id="timerHours" min="0" max="23" value="1" class="w-16 h-12 text-center text-2xl font-semibold bg-gray-100 dark:bg-gray-800 text-gray-900 dark:text-white rounded-lg border border-transparent focus:border-brand-pink focus:ring-1 focus:ring-brand-pink outline-none transition-all">
+                        <span class="text-[10px] text-gray-500 dark:text-gray-400 mt-2 uppercase tracking-wider font-medium">Hrs</span>
+                    </div>
+                    <span class="text-2xl font-bold text-gray-400 dark:text-gray-600 self-start mt-1">:</span>
+                    <div class="flex flex-col items-center">
+                        <input type="number" id="timerMinutes" min="0" max="59" value="30" class="w-16 h-12 text-center text-2xl font-semibold bg-gray-100 dark:bg-gray-800 text-gray-900 dark:text-white rounded-lg border border-transparent focus:border-brand-pink focus:ring-1 focus:ring-brand-pink outline-none transition-all">
+                        <span class="text-[10px] text-gray-500 dark:text-gray-400 mt-2 uppercase tracking-wider font-medium">Min</span>
+                    </div>
+                </div>
+
+                <div class="flex gap-3">
+                    <button onclick="closeTimerModal()" class="flex-1 py-2.5 rounded-xl font-medium text-sm text-gray-600 dark:text-gray-300 bg-gray-100 dark:bg-gray-800 hover:bg-gray-200 dark:hover:bg-gray-700 transition-colors">Cancel</button>
+                    <button onclick="startTimer()" class="flex-1 py-2.5 rounded-xl font-medium text-sm text-white bg-brand-pink hover:bg-pink-600 transition-colors shadow-lg shadow-pink-500/30">Start</button>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        // THEME TOGGLE LOGIC
+        const themeToggle = document.getElementById('themeToggle');
+        themeToggle.addEventListener('click', () => {
+            document.documentElement.classList.toggle('dark');
+        });
+
+        // BUTTON ACTIVE STATE & TIMER CLEARING LOGIC
+        let timerInterval = null;
+
+        function setActive(clickedBtn, mode) {
+            // Find all control buttons and remove the active state
+            const buttons = document.querySelectorAll('.control-btn');
+            buttons.forEach(btn => btn.classList.remove('active'));
+            
+            // Add active state to the clicked button
+            clickedBtn.classList.add('active');
+
+            // If auto or off is clicked, clear the timer
+            if (mode === 'auto' || mode === 'off') {
+                clearTimer();
+            }
+        }
+
+        // TIMER LOGIC
+        function openTimerModal() {
+            const modal = document.getElementById('timerModal');
+            const modalContent = document.getElementById('timerModalContent');
+            
+            modal.classList.remove('opacity-0', 'pointer-events-none');
+            modal.classList.add('opacity-100');
+            modalContent.classList.remove('scale-95');
+            modalContent.classList.add('scale-100');
+        }
+
+        function closeTimerModal() {
+            const modal = document.getElementById('timerModal');
+            const modalContent = document.getElementById('timerModalContent');
+            
+            modal.classList.remove('opacity-100');
+            modal.classList.add('opacity-0', 'pointer-events-none');
+            modalContent.classList.remove('scale-100');
+            modalContent.classList.add('scale-95');
+            
+            // If we closed the modal without starting a timer, and there is no active timer, revert button active state
+            if (!timerInterval) {
+                const autoBtn = document.querySelector('.control-btn'); // Auto is first
+                setActive(autoBtn, 'auto');
+            }
+        }
+
+        function startTimer() {
+            closeTimerModal();
+            clearTimer(); // Clear any existing timer
+            
+            let hours = parseInt(document.getElementById('timerHours').value) || 0;
+            let minutes = parseInt(document.getElementById('timerMinutes').value) || 0;
+            
+            let totalSeconds = (hours * 3600) + (minutes * 60);
+            
+            if (totalSeconds <= 0) {
+                const autoBtn = document.querySelector('.control-btn'); // Auto is first
+                setActive(autoBtn, 'auto');
+                return;
+            }
+
+            const countdownContainer = document.getElementById('countdownContainer');
+            const countdownText = document.getElementById('countdownText');
+            
+            countdownContainer.classList.remove('opacity-0');
+            countdownContainer.classList.add('opacity-100');
+
+            updateTimerDisplay(totalSeconds, countdownText);
+
+            timerInterval = setInterval(() => {
+                totalSeconds--;
+                if (totalSeconds <= 0) {
+                    clearTimer();
+                    const offBtn = document.querySelectorAll('.control-btn')[4]; // Off is 5th
+                    setActive(offBtn, 'off');
+                } else {
+                    updateTimerDisplay(totalSeconds, countdownText);
+                }
+            }, 1000);
+            
+            // Make sure timer button stays highlighted
+            const timerBtn = document.getElementById('timerBtn');
+            const buttons = document.querySelectorAll('.control-btn');
+            buttons.forEach(btn => btn.classList.remove('active'));
+            timerBtn.classList.add('active');
+        }
+        
+        function updateTimerDisplay(totalSeconds, el) {
+            const h = Math.floor(totalSeconds / 3600).toString().padStart(2, '0');
+            const m = Math.floor((totalSeconds % 3600) / 60).toString().padStart(2, '0');
+            const s = (totalSeconds % 60).toString().padStart(2, '0');
+            el.innerText = `${h}:${m}:${s}`;
+        }
+
+        function clearTimer() {
+            if (timerInterval) {
+                clearInterval(timerInterval);
+                timerInterval = null;
+            }
+            const countdownContainer = document.getElementById('countdownContainer');
+            countdownContainer.classList.remove('opacity-100');
+            countdownContainer.classList.add('opacity-0');
+        }
+
+        // RANGE SLIDER LOGIC
+        const svg = document.getElementById('slider-svg');
+        const highlightPath = document.getElementById('highlight-path');
+        const tempDisplay = document.getElementById('temp-display');
+        
+        // Arc configuration
+        const cx = 170, cy = 160, r = 130;
+        
+        // NEW RANGE: 15 to 30
+        const MIN_TEMP = 15; 
+        const MAX_TEMP = 30;
+        const MIN_GAP = 0.08; 
+
+        // State parameters from 0 (left, 15deg) to 1 (right, 30deg)
+        // To get 22 and 28 default:
+        // 22 = 15 + (15 * tMin) -> tMin = 7/15 = ~0.466
+        // 28 = 15 + (15 * tMax) -> tMax = 13/15 = ~0.866
+        let tMin = 0.466; 
+        let tMax = 0.866; 
+        let activeKnob = null;
+
+        function getArcCoordinates(t) {
+            const angle = Math.PI - (t * Math.PI);
+            const x = cx + r * Math.cos(angle);
+            const y = cy - r * Math.sin(angle);
+            return { x, y };
+        }
+
+        function renderSlider() {
+            const pMin = getArcCoordinates(tMin);
+            const pMax = getArcCoordinates(tMax);
+
+            // Position min knob and target
+            document.getElementById('knob-min').setAttribute('cx', pMin.x);
+            document.getElementById('knob-min').setAttribute('cy', pMin.y);
+            document.getElementById('target-min').setAttribute('cx', pMin.x);
+            document.getElementById('target-min').setAttribute('cy', pMin.y);
+
+            // Position max knob and target
+            document.getElementById('knob-max').setAttribute('cx', pMax.x);
+            document.getElementById('knob-max').setAttribute('cy', pMax.y);
+            document.getElementById('target-max').setAttribute('cx', pMax.x);
+            document.getElementById('target-max').setAttribute('cy', pMax.y);
+
+            // Draw highlight path
+            const sweepFlag = 1; 
+            const d = `M ${pMin.x},${pMin.y} A ${r},${r} 0 0,${sweepFlag} ${pMax.x},${pMax.y}`;
+            highlightPath.setAttribute('d', d);
+
+            // Update Temperature Text
+            const tempValMin = Math.round(MIN_TEMP + tMin * (MAX_TEMP - MIN_TEMP));
+            const tempValMax = Math.round(MIN_TEMP + tMax * (MAX_TEMP - MIN_TEMP));
+            tempDisplay.innerHTML = `${tempValMin}&deg;C - ${tempValMax}&deg;C`;
+        }
+
+        function getEventPoint(e) {
+            const pt = svg.createSVGPoint();
+            if (e.touches && e.touches.length > 0) {
+                pt.x = e.touches[0].clientX;
+                pt.y = e.touches[0].clientY;
+            } else {
+                pt.x = e.clientX;
+                pt.y = e.clientY;
+            }
+            return pt.matrixTransform(svg.getScreenCTM().inverse());
+        }
+
+        function startDrag(e, knobType) {
+            e.preventDefault(); 
+            activeKnob = knobType;
+            document.getElementById(`knob-${knobType}`).classList.add('dragging');
+            
+            document.addEventListener('mousemove', onDrag);
+            document.addEventListener('mouseup', endDrag);
+            document.addEventListener('touchmove', onDrag, { passive: false });
+            document.addEventListener('touchend', endDrag);
+        }
+
+        function onDrag(e) {
+            if (!activeKnob) return;
+            e.preventDefault(); 
+            
+            const point = getEventPoint(e);
+            let angle = Math.atan2(cy - point.y, point.x - cx);
+            if (angle < 0) angle += 2 * Math.PI;
+
+            let t = 1 - (angle / Math.PI);
+            t = Math.max(0, Math.min(1, t));
+
+            if (activeKnob === 'min') {
+                tMin = Math.min(t, tMax - MIN_GAP);
+            } else if (activeKnob === 'max') {
+                tMax = Math.max(t, tMin + MIN_GAP);
+            }
+
+            renderSlider();
+        }
+
+        function endDrag() {
+            if (activeKnob) {
+                document.getElementById(`knob-${activeKnob}`).classList.remove('dragging');
+                activeKnob = null;
+            }
+            document.removeEventListener('mousemove', onDrag);
+            document.removeEventListener('mouseup', endDrag);
+            document.removeEventListener('touchmove', onDrag);
+            document.removeEventListener('touchend', endDrag);
+        }
+
+        // Initial render
+        renderSlider();
+    </script>
+</body>
+</html>
