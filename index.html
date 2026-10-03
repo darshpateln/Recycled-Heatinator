@@ -354,8 +354,8 @@
                 totalSeconds--;
                 if (totalSeconds <= 0) {
                     clearTimer();
-                    const offBtn = document.querySelectorAll('.control-btn')[4]; // Off is 5th
-                    setActive(offBtn, 'off');
+                    const autoBtn = document.querySelectorAll('.control-btn')[0]; // Auto is 1st
+                    setActive(autoBtn, 'auto');
                 } else {
                     updateTimerDisplay(totalSeconds, countdownText);
                 }
